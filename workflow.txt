@@ -1,0 +1,73 @@
+Geospatial Analysis Project
+By Maria Carolina da S. Andrea, April, 2019.
+
++ Analysis workflow
+
+**Determining the effect of ENSO events on agricultural areas in a region of Mato Grosso state, Brazil**
+
+1. Analysis steps
+
+Input: Landsat 7 scenes of the same region in three different years: a el niño, a la niña and a neutral year. 
+
+1.1. Composition of RGB scenes - Red, Blue and Green bands (Landsat 7). These rasters layers are combined to provide a single raster, a RGB band combination.
+tool: Composite Bands
+input: three different (red, green, blue) bands from each scene
+output: three rasters
+
+Supervised Classification:
+1.2. Collection of training samples - I will use at leat 4 classes: agriculture; non-intensive vegetation; bare land; water which also correspond to major land cover: this region does not have much urban area.
+This step will likely be done and re-done more than once, after the result of the whole classification is observed and considered (or not) to be similar to real conditions. Agricultural areas are always the first to be sampled, and the same order is maintained between scenes. 
+tool: Image Classification: Training Sample Manager
+input: three composed rasters
+output: training samples (at least 40, most likely will be more than that): signature file for each scene
+
+1.3 Composition and calculation of NDVI rasters - By adding the red (again) and near-infrared bands of each scene, NDVI for the whole area was obtained: determining NDVI by calculations.
+tool: Raster calculator - map algebra expression
+input: two bands (red and near infrared) from each scene
+output: three rasters containing NDVI for the whole scene
+
+
+1.4. Image classification - Regarding the supervised classification, using the trainins samples as reference, the whole scene is classified. In this step is already possible to check the necessity to go back to step 2.2.
+tool: Maximum Likelihood Classification
+input: three composed RGB rasters and signature file from manual classification
+output: three classified rasters
+
+1.5. Extraction of agricultural areas - in this step, I need to extract only the agricultural vegetation areas, as classified by previous step. ("Where" clause: VALUE = 1, since the agricultural areas will be always the first to be classified).
+tool: Extract by attribute
+input: previous classified rasters
+output: agricultural vegetation area rasters
+
+1.6. Extraction of NDVI only for the agricultural vegetation areas. Now starting to combine RGB and NDVI scene products
+tool: Extraction by mask
+input: NDVI raster and ag vegetation rasters
+output: raster containint the NDVI of only ag. vegetation areas
+
+1.7. Determination of NDVI differences between years of different events
+In this step, I'll have to provide results based on the neutral year mainly, since this is my main question: if years of ENSO events result in any difference on ag.
+tool: Raster calculator
+input: NDVI of each of three scenes
+output: rasters containing the difference of la niña -  neutral and other with el niño - neutral
+(I may also calculate a la niña - el niño) (Also, I am not sure if I'll calculate NDVI change as difference (subtraction) or variation in %).
+
+
+1.8. Reclassification of NDVI rasters - this step aims to provide an adjust to the classification characteristics, such as method, number of classes, etc. It is visual, but also relates to my objectives of analysis: it provides a field in attribute table that contain the # of cells falling into each class.
+tool: Reclassify
+input: rasters of NDVI differences from previous steps
+output: reclassified rasters (same as input, additional attribute field)
+
+What I'll get after that are a number of pixels that shows different classes (I chose number and limits of classes) of NDVI *variation* - by difference or % (not pure NDVI values).
+Classes may indicate: strong loss, loss, no change, gain and strong gain, depending on the range of values I´ll find.
+
+1.9. Adjusting symbology - in this step the visual is adjusted to performe best understaind of results. Characteristics such as color palette will be worked on.
+tool: Layer properties
+
+1.10. Determination of areas of NDVI changes - in this step, I'll calculate the area of each class of NDVI variation, so I don't have only the % of change or visual to assess my question of study. I am able to do that since I have the # of pixels and the size of each pixel (Landsat 7). By doing this, I can not only detect changes, but also quantify the. Not sure how I'll show this (only a single number for each of the classes of setp 2.8: ~5 or 6 probably).
+tool: Field calculator in attribute table
+input: rasters from previous step
+output: feature class: Area
+
+1.11 Determination of montlhy rainfall for the region in each of the assessed three years - This step is also an auxiliary measure in my analysis. With montlhy rainfall, I am able to support the results of NDVI variation I'll find.
+tool: acquisition and management climate database
+output: Montlhy rainfall values for each year 
+
+I am describing steps to be performed manually, but few of them could be performed inside Model Builder, such as steps 2.4 through 2.7.
